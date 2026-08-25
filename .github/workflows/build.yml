@@ -33,7 +33,7 @@ jobs:
 
       - name: Build ReShade (64-bit)
         run: |
-          msbuild ReShade.sln /p:Configuration=Release /p:Platform=64-bit /p:RESHADE_ADDON=2
+          msbuild ReShade.sln /p:Configuration=Release /p:Platform=64-bit /p:RESHADE_ADDON=2 /p:PlatformToolset=v143
 
       - name: Prepare Output Package
         run: |
@@ -52,5 +52,5 @@ jobs:
       - name: Upload Clean ReShade Package
         uses: actions/upload-artifact@v7
         with:
-          name: ReShade-Addon-DLL
+          name: ReShade64-Clean-Package
           path: './release_package/*'
