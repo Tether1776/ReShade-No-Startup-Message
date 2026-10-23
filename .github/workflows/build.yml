@@ -1,11 +1,11 @@
 name: build
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - main
-  pull_request:
-    branches:
+      - custom-6.7.3
+      - custom-6.8.0
       - main
 
 permissions: {}
@@ -33,32 +33,32 @@ jobs:
       - name: Set up MSBuild
         uses: microsoft/setup-msbuild@v3
 
-      - name: Build ReShade (32-bit)
+      - name: Build ReShade (64-bit & 32-bit)
         run: |
-          msbuild ReShade.sln /p:Configuration=Release /p:Platform=32-bit
+          msbuild ReShade.sln /p:Configuration=Release /p:Platform=64-bit /p:RESHADE_ADDON=2 /p:PlatformToolset=v143
+          msbuild ReShade.sln /p:Configuration=Release /p:Platform=32-bit /p:RESHADE_ADDON=2 /p:PlatformToolset=v143
 
-      - name: Build ReShade (64-bit)
+      - name: Prepare Output Package
         run: |
-          msbuild ReShade.sln /p:Configuration=Release /p:Platform=64-bit
+          mkdir .\release_package
+          
+          copy ReShade.ini .\release_package\ReShade.ini
+          
+          # Copy 64-bit native DLL, Vulkan JSON, and API wrappers
+          copy .\bin\x64\Release\ReShade64.dll .\release_package\ReShade64.dll
+          copy .\res\ReShade64.json .\release_package\ReShade64.json
+          copy .\bin\x64\Release\ReShade64.dll .\release_package\dxgi.dll
+          copy .\bin\x64\Release\ReShade64.dll .\release_package\d3d11.dll
+          copy .\bin\x64\Release\ReShade64.dll .\release_package\d3d12.dll
+          copy .\bin\x64\Release\ReShade64.dll .\release_package\d3d9.dll
+          copy .\bin\x64\Release\ReShade64.dll .\release_package\opengl32.dll
 
-      - name: Build ReShade Setup
-        run: |
-          msbuild ReShade.sln /p:Configuration="Release Setup"
+          # Copy 32-bit native DLL and Vulkan JSON
+          copy .\bin\Win32\Release\ReShade32.dll .\release_package\ReShade32.dll
+          copy .\res\ReShade32.json .\release_package\ReShade32.json
 
-      - name: Upload ReShade (32-bit)
+      - name: Upload Clean ReShade Package
         uses: actions/upload-artifact@v7
         with:
-          name: ReShade (32-bit)
-          path: './bin/Win32/Release/ReShade32.dll'
-
-      - name: Upload ReShade (64-bit)
-        uses: actions/upload-artifact@v7
-        with:
-          name: ReShade (64-bit)
-          path: './bin/x64/Release/ReShade64.dll'
-
-      - name: Upload ReShade Setup
-        uses: actions/upload-artifact@v7
-        with:
-          name: ReShade Setup
-          path: './bin/AnyCPU/Release/ReShade Setup.exe'
+          name: ReShade-Complete-Package
+          path: './release_package/*'
